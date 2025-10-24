@@ -1,0 +1,24 @@
+{
+  "detection": {
+    "ear_threshold": 0.2,
+    "head_tilt_threshold": 0.58,
+    "confidence_threshold": 0.75,
+    "drowsy_count_threshold": 5,
+    "check_interval": 2,
+    "alert_cooldown": 300
+  },
+  "seat_detection": {
+    "brightness_threshold": 180,
+    "edge_density_threshold": 0.05
+  },
+  "telegram": {
+    "bot_token": "YOUR_BOT_TOKEN_HERE",
+    "chat_id": "YOUR_CHAT_ID_HERE"
+  },
+  "github": {
+    "enabled": true,
+    "token": "YOUR_GITHUB_TOKEN_HERE",
+    "repo_owner": "tonyhwang1004",
+    "repo_name": "viewguard-monitor"
+  }
+}
