@@ -3,276 +3,808 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ViewGuard Monitor - 실시간 대시보드</title>
+    <title>ViewGuard 졸음 모니터링 시스템</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
         }
-        
-        header {
+
+        /* 헤더 */
+        .header {
             background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 20px;
+            padding: 30px;
             margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
-        
-        h1 {
-            color: #333;
-            font-size: 32px;
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        
-        .subtitle {
+
+        .header p {
             color: #666;
-            font-size: 14px;
+            font-size: 1.1em;
         }
-        
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-left: auto;
+        }
+
+        .status-active {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        /* 통계 카드 */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .stat-card {
             background: white;
-            padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
         }
-        
-        .stat-label {
-            color: #888;
-            font-size: 14px;
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
             margin-bottom: 10px;
         }
-        
-        .stat-value {
-            font-size: 36px;
-            font-weight: bold;
-            color: #667eea;
+
+        .stat-card.total .stat-value { color: #667eea; }
+        .stat-card.today .stat-value { color: #10b981; }
+        .stat-card.active .stat-value { color: #f59e0b; }
+        .stat-card.students .stat-value { color: #ec4899; }
+
+        .stat-change {
+            font-size: 0.9em;
+            color: #10b981;
         }
-        
-        .channels {
+
+        /* 알림 섹션 */
+        .alerts-section {
             background: white;
+            border-radius: 20px;
             padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
-        
-        .channels h2 {
+
+        .alerts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .alerts-header h2 {
+            color: #333;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            background: #5568d3;
+            transform: scale(1.05);
+        }
+
+        .refresh-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 알림 카드 */
+        .alert-item {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffe4e4 100%);
+            border-left: 5px solid #ef4444;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .alert-item.new {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .alert-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #dc2626;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-time {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .alert-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .alert-detail {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+        }
+
+        .alert-detail-label {
+            color: #666;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .alert-detail-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .alert-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .alert-btn.view {
+            background: #667eea;
+            color: white;
+        }
+
+        .alert-btn.view:hover {
+            background: #5568d3;
+        }
+
+        /* 로딩 스피너 */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        /* 차트 섹션 */
+        .chart-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .chart-section h2 {
             color: #333;
             margin-bottom: 20px;
         }
-        
-        .channels-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
+
+        .chart-container {
+            height: 300px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            gap: 10px;
         }
-        
-        .channel {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            transition: all 0.3s;
-            border: 2px solid transparent;
+
+        .chart-bar {
+            flex: 1;
+            background: linear-gradient(to top, #667eea, #764ba2);
+            border-radius: 10px 10px 0 0;
+            position: relative;
+            transition: all 0.3s ease;
+            min-height: 20px;
         }
-        
-        .channel:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+
+        .chart-bar:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
         }
-        
-        .channel.alert {
-            background: #e8f5e9;
-            border-color: #4caf50;
-        }
-        
-        .channel.drowsy {
-            background: #ffebee;
-            border-color: #f44336;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-        
-        .channel-number {
-            font-size: 20px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
-        .channel-emoji {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-        
-        .channel-status {
-            font-size: 12px;
+
+        .chart-bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em;
             color: #666;
+            white-space: nowrap;
         }
-        
-        .last-update {
+
+        .chart-bar-value {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 푸터 */
+        .footer {
             text-align: center;
             color: white;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: white;
-            font-size: 18px;
-        }
-        
-        .error {
-            background: #ffebee;
-            color: #c62828;
             padding: 20px;
+            margin-top: 30px;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .alert-details {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 알림 사운드 토글 */
+        .sound-toggle {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 10px 20px;
             border-radius: 10px;
-            margin: 20px 0;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .sound-toggle.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 필터 버튼 */
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .filter-btn:hover {
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🎯 ViewGuard Monitor</h1>
-            <p class="subtitle">김엄마독서실 & 수리딩클럽 - 실시간 모니터링</p>
-        </header>
-        
+        <!-- 헤더 -->
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>
+                        👁️ ViewGuard
+                        <span class="status-badge status-active" id="systemStatus">시스템 정상</span>
+                    </h1>
+                    <p>실시간 졸음 감지 모니터링 시스템</p>
+                </div>
+                <button class="sound-toggle" id="soundToggle">
+                    🔔 알림음 ON
+                </button>
+            </div>
+        </div>
+
+        <!-- 통계 카드 -->
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">총 체크</div>
-                <div class="stat-value" id="total-checks">0</div>
+            <div class="stat-card total">
+                <h3>전체 감지</h3>
+                <div class="stat-value" id="totalAlerts">0</div>
+                <div class="stat-change">📊 누적 기록</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">졸음 감지</div>
-                <div class="stat-value" id="drowsy-count" style="color: #f44336;">0</div>
+            <div class="stat-card today">
+                <h3>오늘 감지</h3>
+                <div class="stat-value" id="todayAlerts">0</div>
+                <div class="stat-change">📅 Today</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">알림 발송</div>
-                <div class="stat-value" id="alert-count" style="color: #ff9800;">0</div>
+            <div class="stat-card active">
+                <h3>미확인 알림</h3>
+                <div class="stat-value" id="openAlerts">0</div>
+                <div class="stat-change">⚠️ 확인 필요</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">감지율</div>
-                <div class="stat-value" id="detection-rate" style="color: #9c27b0;">0%</div>
-            </div>
-        </div>
-        
-        <div class="channels">
-            <h2>📺 채널 상태 (실시간)</h2>
-            <div class="channels-grid" id="channels-grid">
-                <div class="loading">데이터 로딩 중...</div>
+            <div class="stat-card students">
+                <h3>모니터링 좌석</h3>
+                <div class="stat-value" id="monitoringSeats">0</div>
+                <div class="stat-change">👥 Active</div>
             </div>
         </div>
-        
-        <div class="last-update">
-            마지막 업데이트: <span id="last-update">-</span>
-            <br>
-            <small>30초마다 자동 갱신</small>
+
+        <!-- 시간대별 차트 -->
+        <div class="chart-section">
+            <h2>📈 시간대별 감지 현황</h2>
+            <div class="chart-container" id="hourlyChart">
+                <!-- 차트 바들이 동적으로 생성됨 -->
+            </div>
+        </div>
+
+        <!-- 알림 섹션 -->
+        <div class="alerts-section">
+            <div class="alerts-header">
+                <h2>🚨 실시간 알림</h2>
+                <div style="display: flex; gap: 10px;">
+                    <span style="color: #666; align-self: center;">마지막 업데이트: <span id="lastUpdate">-</span></span>
+                    <button class="refresh-btn" id="refreshBtn">
+                        🔄 새로고침
+                    </button>
+                </div>
+            </div>
+
+            <!-- 필터 버튼 -->
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">전체</button>
+                <button class="filter-btn" data-filter="today">오늘</button>
+                <button class="filter-btn" data-filter="open">미확인</button>
+                <button class="filter-btn" data-filter="closed">확인완료</button>
+            </div>
+
+            <div id="alertsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>알림 데이터를 불러오는 중...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 푸터 -->
+        <div class="footer">
+            <p>© 2025 ViewGuard - Powered by GitHub Issues</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Repository: <a href="https://github.com/tonyhwang1004/viewguard-monitor" style="color: white; text-decoration: underline;">tonyhwang1004/viewguard-monitor</a>
+            </p>
         </div>
     </div>
-    
+
     <script>
-        // 데이터 로드 및 표시
-        async function loadData() {
+        // GitHub API 설정
+        const GITHUB_OWNER = 'tonyhwang1004';
+        const GITHUB_REPO = 'viewguard-monitor';
+        const API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`;
+
+        // 상태 변수
+        let allIssues = [];
+        let soundEnabled = true;
+        let currentFilter = 'all';
+        let lastIssueCount = 0;
+
+        // 알림음 재생
+        function playAlertSound() {
+            if (soundEnabled) {
+                // Web Audio API로 간단한 비프음 생성
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+        }
+
+        // Issues 데이터 가져오기
+        async function fetchIssues() {
             try {
-                const response = await fetch('data.json');
+                const response = await fetch(`${API_URL}?state=all&per_page=100`);
+                if (!response.ok) throw new Error('Failed to fetch issues');
                 
-                if (!response.ok) {
-                    throw new Error('데이터를 불러올 수 없습니다');
+                const issues = await response.json();
+                
+                // 새로운 Issue 체크
+                if (issues.length > lastIssueCount && lastIssueCount > 0) {
+                    playAlertSound();
+                    showNotification('새로운 졸음 감지 알림!', issues[0].title);
                 }
+                lastIssueCount = issues.length;
                 
-                const data = await response.json();
-                
-                // 통계 업데이트
-                document.getElementById('total-checks').textContent = data.total_checks || 0;
-                document.getElementById('drowsy-count').textContent = data.drowsy_count || 0;
-                document.getElementById('alert-count').textContent = data.alerts_sent || 0;
-                
-                const rate = data.total_checks > 0 
-                    ? ((data.drowsy_count / data.total_checks) * 100).toFixed(1)
-                    : 0;
-                document.getElementById('detection-rate').textContent = rate + '%';
-                
-                document.getElementById('last-update').textContent = data.last_update || '-';
-                
-                // 채널 상태 표시
-                const channelsGrid = document.getElementById('channels-grid');
-                channelsGrid.innerHTML = '';
-                
-                const channels = data.channels || {};
-                
-                for (let i = 1; i <= 16; i++) {
-                    const chNum = i.toString().padStart(2, '0');
-                    const chKey = `CH${chNum}`;
-                    const ch = channels[chKey] || { status: 'unknown', last_check: '-' };
-                    
-                    const channelDiv = document.createElement('div');
-                    channelDiv.className = `channel ${ch.status}`;
-                    
-                    let emoji = '⚪';
-                    let statusText = '알 수 없음';
-                    
-                    if (ch.status === 'drowsy') {
-                        emoji = '😴';
-                        statusText = '조는 중!';
-                    } else if (ch.status === 'alert') {
-                        emoji = '✅';
-                        statusText = '정상';
-                    } else if (ch.status === 'empty') {
-                        emoji = '⚪';
-                        statusText = '비어있음';
-                    }
-                    
-                    channelDiv.innerHTML = `
-                        <div class="channel-number">CH ${chNum}</div>
-                        <div class="channel-emoji">${emoji}</div>
-                        <div class="channel-status">${statusText}</div>
-                    `;
-                    
-                    channelsGrid.appendChild(channelDiv);
-                }
+                allIssues = issues;
+                updateStats(issues);
+                updateChart(issues);
+                displayIssues(issues);
+                updateLastUpdateTime();
                 
             } catch (error) {
-                console.error('데이터 로드 오류:', error);
-                document.getElementById('channels-grid').innerHTML = `
-                    <div class="error">
-                        ⚠️ 데이터를 불러오는데 실패했습니다.<br>
-                        <small>${error.message}</small>
+                console.error('Error fetching issues:', error);
+                document.getElementById('alertsList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <h3>데이터를 불러올 수 없습니다</h3>
+                        <p>잠시 후 다시 시도해주세요</p>
                     </div>
                 `;
             }
         }
-        
+
+        // 브라우저 알림 표시
+        function showNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: body,
+                    icon: '👁️',
+                    badge: '🚨'
+                });
+            }
+        }
+
+        // 통계 업데이트
+        function updateStats(issues) {
+            const today = new Date().toISOString().split('T')[0];
+            const todayIssues = issues.filter(issue => 
+                issue.created_at.startsWith(today)
+            );
+            const openIssues = issues.filter(issue => issue.state === 'open');
+            
+            // 좌석 수 계산 (Issue 제목에서 CH 번호 추출)
+            const seats = new Set();
+            issues.forEach(issue => {
+                const match = issue.title.match(/CH\d+/);
+                if (match) seats.add(match[0]);
+            });
+
+            document.getElementById('totalAlerts').textContent = issues.length;
+            document.getElementById('todayAlerts').textContent = todayIssues.length;
+            document.getElementById('openAlerts').textContent = openIssues.length;
+            document.getElementById('monitoringSeats').textContent = seats.size;
+
+            // 시스템 상태 업데이트
+            const statusBadge = document.getElementById('systemStatus');
+            if (openIssues.length > 5) {
+                statusBadge.textContent = '⚠️ 주의 필요';
+                statusBadge.className = 'status-badge status-warning';
+            } else {
+                statusBadge.textContent = '✅ 시스템 정상';
+                statusBadge.className = 'status-badge status-active';
+            }
+        }
+
+        // 시간대별 차트 업데이트
+        function updateChart(issues) {
+            const hourCounts = new Array(24).fill(0);
+            
+            issues.forEach(issue => {
+                const hour = new Date(issue.created_at).getHours();
+                hourCounts[hour]++;
+            });
+
+            const maxCount = Math.max(...hourCounts, 1);
+            const chartContainer = document.getElementById('hourlyChart');
+            
+            chartContainer.innerHTML = '';
+            
+            // 주요 시간대만 표시 (6시~23시)
+            for (let hour = 6; hour < 24; hour++) {
+                const count = hourCounts[hour];
+                const percentage = (count / maxCount) * 100;
+                
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.height = `${Math.max(percentage, 5)}%`;
+                bar.innerHTML = `
+                    <div class="chart-bar-value">${count}</div>
+                    <div class="chart-bar-label">${hour}시</div>
+                `;
+                chartContainer.appendChild(bar);
+            }
+        }
+
+        // Issues 표시
+        function displayIssues(issues) {
+            const alertsList = document.getElementById('alertsList');
+            
+            // 필터 적용
+            let filteredIssues = issues;
+            const today = new Date().toISOString().split('T')[0];
+            
+            switch (currentFilter) {
+                case 'today':
+                    filteredIssues = issues.filter(issue => 
+                        issue.created_at.startsWith(today)
+                    );
+                    break;
+                case 'open':
+                    filteredIssues = issues.filter(issue => issue.state === 'open');
+                    break;
+                case 'closed':
+                    filteredIssues = issues.filter(issue => issue.state === 'closed');
+                    break;
+            }
+
+            if (filteredIssues.length === 0) {
+                alertsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <h3>알림이 없습니다</h3>
+                        <p>현재 졸음 감지 알림이 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            alertsList.innerHTML = filteredIssues.map(issue => {
+                const createdDate = new Date(issue.created_at);
+                const isNew = (Date.now() - createdDate.getTime()) < 300000; // 5분 이내
+                
+                // Issue 본문에서 정보 추출
+                const body = issue.body || '';
+                const earMatch = body.match(/EAR[:\s]+([0-9.]+)/i);
+                const tiltMatch = body.match(/Head Tilt[:\s]+([0-9.]+)/i);
+                const seatMatch = issue.title.match(/(CH\d+)/);
+                
+                return `
+                    <div class="alert-item ${isNew ? 'new' : ''}">
+                        <div class="alert-header">
+                            <div class="alert-title">
+                                🚨 ${issue.title}
+                                ${issue.state === 'closed' ? '<span style="color: #10b981; font-size: 0.8em;">✓ 확인완료</span>' : ''}
+                            </div>
+                            <div class="alert-time">
+                                ${formatDate(createdDate)}
+                            </div>
+                        </div>
+                        
+                        <div class="alert-details">
+                            ${earMatch ? `
+                                <div class="alert-detail">
+                                    <div class="alert-detail-label">EAR 값</div>
+                                    <div class="alert-detail-value">${earMatch[1]}</div>
+                                </div>
+                            ` : ''}
+                            ${tiltMatch ? `
+                                <div class="alert-detail">
+                                    <div class="alert-detail-label">Head Tilt</div>
+                                    <div class="alert-detail-value">${tiltMatch[1]}°</div>
+                                </div>
+                            ` : ''}
+                            ${seatMatch ? `
+                                <div class="alert-detail">
+                                    <div class="alert-detail-label">좌석</div>
+                                    <div class="alert-detail-value">${seatMatch[1]}</div>
+                                </div>
+                            ` : ''}
+                            <div class="alert-detail">
+                                <div class="alert-detail-label">상태</div>
+                                <div class="alert-detail-value">${issue.state === 'open' ? '🔴 미확인' : '🟢 확인완료'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-actions">
+                            <button class="alert-btn view" onclick="window.open('${issue.html_url}', '_blank')">
+                                📄 상세보기
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 날짜 포맷팅
+        function formatDate(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return '방금 전';
+            if (minutes < 60) return `${minutes}분 전`;
+            if (hours < 24) return `${hours}시간 전`;
+            if (days < 7) return `${days}일 전`;
+            
+            return date.toLocaleDateString('ko-KR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 마지막 업데이트 시간
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('ko-KR');
+        }
+
+        // 새로고침 버튼
+        document.getElementById('refreshBtn').addEventListener('click', async function() {
+            this.disabled = true;
+            this.textContent = '⏳ 업데이트 중...';
+            await fetchIssues();
+            this.disabled = false;
+            this.textContent = '🔄 새로고침';
+        });
+
+        // 알림음 토글
+        document.getElementById('soundToggle').addEventListener('click', function() {
+            soundEnabled = !soundEnabled;
+            this.textContent = soundEnabled ? '🔔 알림음 ON' : '🔕 알림음 OFF';
+            this.classList.toggle('active');
+        });
+
+        // 필터 버튼
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                displayIssues(allIssues);
+            });
+        });
+
+        // 브라우저 알림 권한 요청
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
         // 초기 로드
-        loadData();
-        
-        // 30초마다 자동 새로고침
-        setInterval(loadData, 30000);
+        fetchIssues();
+
+        // 자동 새로고침 (30초마다)
+        setInterval(fetchIssues, 30000);
     </script>
 </body>
 </html>
