@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViewGuard 모니터링</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 헤더 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        /* 통계 */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .stat-box .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* 컨트롤 */
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 알림 목록 */
+        .alerts {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .alert-item {
+            background: #fff5f5;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+
+        .alert-item.closed {
+            background: #f0fdf4;
+            border-left-color: #10b981;
+        }
+
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .alert-time {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .alert-info {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .alert-info span {
+            background: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .view-btn {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 0.9em;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>👁️ ViewGuard 졸음 모니터링</h1>
+            <p>실시간 알림 시스템</p>
+        </div>
+
+        <!-- 통계 -->
+        <div class="stats">
+            <div class="stat-box">
+                <h3>전체 감지</h3>
+                <div class="number" id="total">0</div>
+            </div>
+            <div class="stat-box">
+                <h3>오늘</h3>
+                <div class="number" id="today">0</div>
+            </div>
+            <div class="stat-box">
+                <h3>미확인</h3>
+                <div class="number" id="open">0</div>
+            </div>
+        </div>
+
+        <!-- 컨트롤 -->
+        <div class="controls">
+            <div>
+                마지막 업데이트: <strong id="lastUpdate">-</strong>
+            </div>
+            <button id="refreshBtn">🔄 새로고침</button>
+        </div>
+
+        <!-- 알림 목록 -->
+        <div class="alerts">
+            <h2 style="margin-bottom: 20px;">📋 최근 알림</h2>
+            <div id="alertsList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>데이터 불러오는 중...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://api.github.com/repos/tonyhwang1004/viewguard-monitor/issues';
+        
+        // 데이터 가져오기
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}?state=all&per_page=50`);
+                const issues = await response.json();
+                
+                updateStats(issues);
+                displayAlerts(issues);
+                updateTime();
+                
+            } catch (error) {
+                document.getElementById('alertsList').innerHTML = `
+                    <div class="empty">
+                        <p>⚠️ 데이터를 불러올 수 없습니다</p>
+                    </div>
+                `;
+            }
+        }
+
+        // 통계 업데이트
+        function updateStats(issues) {
+            const today = new Date().toISOString().split('T')[0];
+            const todayIssues = issues.filter(i => i.created_at.startsWith(today));
+            const openIssues = issues.filter(i => i.state === 'open');
+
+            document.getElementById('total').textContent = issues.length;
+            document.getElementById('today').textContent = todayIssues.length;
+            document.getElementById('open').textContent = openIssues.length;
+        }
+
+        // 알림 표시
+        function displayAlerts(issues) {
+            const list = document.getElementById('alertsList');
+            
+            if (issues.length === 0) {
+                list.innerHTML = `
+                    <div class="empty">
+                        <p>✅ 알림이 없습니다</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = issues.slice(0, 20).map(issue => {
+                const date = new Date(issue.created_at);
+                const body = issue.body || '';
+                
+                // 정보 추출
+                const ear = body.match(/EAR[:\s]+([0-9.]+)/i);
+                const tilt = body.match(/Head Tilt[:\s]+([0-9.]+)/i);
+                const seat = issue.title.match(/(CH\d+)/);
+                
+                return `
+                    <div class="alert-item ${issue.state}">
+                        <div class="alert-title">
+                            ${issue.state === 'closed' ? '✅' : '🚨'} ${issue.title}
+                        </div>
+                        <div class="alert-time">
+                            ${formatTime(date)}
+                        </div>
+                        <div class="alert-info">
+                            ${ear ? `<span>EAR: ${ear[1]}</span>` : ''}
+                            ${tilt ? `<span>각도: ${tilt[1]}°</span>` : ''}
+                            ${seat ? `<span>좌석: ${seat[1]}</span>` : ''}
+                            <span>상태: ${issue.state === 'open' ? '미확인' : '확인완료'}</span>
+                        </div>
+                        <a href="${issue.html_url}" target="_blank" class="view-btn">
+                            📄 상세보기
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 시간 포맷
+        function formatTime(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+
+            if (minutes < 1) return '방금 전';
+            if (minutes < 60) return `${minutes}분 전`;
+            if (hours < 24) return `${hours}시간 전`;
+            
+            return date.toLocaleDateString('ko-KR', {
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 업데이트 시간
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = 
+                now.toLocaleTimeString('ko-KR');
+        }
+
+        // 새로고침 버튼
+        document.getElementById('refreshBtn').addEventListener('click', async function() {
+            this.disabled = true;
+            this.textContent = '⏳ 업데이트 중...';
+            await loadData();
+            this.disabled = false;
+            this.textContent = '🔄 새로고침';
+        });
+
+        // 초기 로드
+        loadData();
+
+        // 자동 새로고침 (1분마다)
+        setInterval(loadData, 60000);
+    </script>
+</body>
+</html>
