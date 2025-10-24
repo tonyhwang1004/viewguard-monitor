@@ -1,0 +1,13 @@
+{
+  "comment": "이 파일은 ROI Manager로 자동 생성됩니다",
+  "seats": {
+    "1": {
+      "x": 100,
+      "y": 100,
+      "width": 200,
+      "height": 150,
+      "channel": "CH01",
+      "enabled": true
+    }
+  }
+}
