@@ -1,0 +1,90 @@
+{
+  "total_checks": 320,
+  "drowsy_count": 45,
+  "alerts_sent": 12,
+  "last_update": "2025-10-24 14:30:00",
+  "channels": {
+    "CH01": {
+      "status": "alert",
+      "last_check": "14:29:58",
+      "has_person": true
+    },
+    "CH02": {
+      "status": "alert",
+      "last_check": "14:29:45",
+      "has_person": true
+    },
+    "CH03": {
+      "status": "drowsy",
+      "last_check": "14:30:00",
+      "has_person": true,
+      "confidence": 0.85
+    },
+    "CH04": {
+      "status": "empty",
+      "last_check": "14:29:30",
+      "has_person": false
+    },
+    "CH05": {
+      "status": "alert",
+      "last_check": "14:29:20",
+      "has_person": true
+    },
+    "CH06": {
+      "status": "alert",
+      "last_check": "14:29:10",
+      "has_person": true
+    },
+    "CH07": {
+      "status": "drowsy",
+      "last_check": "14:29:55",
+      "has_person": true,
+      "confidence": 0.92
+    },
+    "CH08": {
+      "status": "alert",
+      "last_check": "14:29:40",
+      "has_person": true
+    },
+    "CH09": {
+      "status": "empty",
+      "last_check": "14:29:25",
+      "has_person": false
+    },
+    "CH10": {
+      "status": "alert",
+      "last_check": "14:29:15",
+      "has_person": true
+    },
+    "CH11": {
+      "status": "alert",
+      "last_check": "14:29:05",
+      "has_person": true
+    },
+    "CH12": {
+      "status": "alert",
+      "last_check": "14:28:55",
+      "has_person": true
+    },
+    "CH13": {
+      "status": "empty",
+      "last_check": "14:28:45",
+      "has_person": false
+    },
+    "CH14": {
+      "status": "alert",
+      "last_check": "14:28:35",
+      "has_person": true
+    },
+    "CH15": {
+      "status": "alert",
+      "last_check": "14:28:25",
+      "has_person": true
+    },
+    "CH16": {
+      "status": "alert",
+      "last_check": "14:28:15",
+      "has_person": true
+    }
+  }
+}

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViewGuard Monitor - 실시간 대시보드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .channels {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .channels h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .channel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .channel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .channel.alert {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+        
+        .channel.drowsy {
+            background: #ffebee;
+            border-color: #f44336;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .channel-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .channel-emoji {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .channel-status {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .last-update {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 ViewGuard Monitor</h1>
+            <p class="subtitle">김엄마독서실 & 수리딩클럽 - 실시간 모니터링</p>
+        </header>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">총 체크</div>
+                <div class="stat-value" id="total-checks">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">졸음 감지</div>
+                <div class="stat-value" id="drowsy-count" style="color: #f44336;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">알림 발송</div>
+                <div class="stat-value" id="alert-count" style="color: #ff9800;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">감지율</div>
+                <div class="stat-value" id="detection-rate" style="color: #9c27b0;">0%</div>
+            </div>
+        </div>
+        
+        <div class="channels">
+            <h2>📺 채널 상태 (실시간)</h2>
+            <div class="channels-grid" id="channels-grid">
+                <div class="loading">데이터 로딩 중...</div>
+            </div>
+        </div>
+        
+        <div class="last-update">
+            마지막 업데이트: <span id="last-update">-</span>
+            <br>
+            <small>30초마다 자동 갱신</small>
+        </div>
+    </div>
+    
+    <script>
+        // 데이터 로드 및 표시
+        async function loadData() {
+            try {
+                const response = await fetch('data.json');
+                
+                if (!response.ok) {
+                    throw new Error('데이터를 불러올 수 없습니다');
+                }
+                
+                const data = await response.json();
+                
+                // 통계 업데이트
+                document.getElementById('total-checks').textContent = data.total_checks || 0;
+                document.getElementById('drowsy-count').textContent = data.drowsy_count || 0;
+                document.getElementById('alert-count').textContent = data.alerts_sent || 0;
+                
+                const rate = data.total_checks > 0 
+                    ? ((data.drowsy_count / data.total_checks) * 100).toFixed(1)
+                    : 0;
+                document.getElementById('detection-rate').textContent = rate + '%';
+                
+                document.getElementById('last-update').textContent = data.last_update || '-';
+                
+                // 채널 상태 표시
+                const channelsGrid = document.getElementById('channels-grid');
+                channelsGrid.innerHTML = '';
+                
+                const channels = data.channels || {};
+                
+                for (let i = 1; i <= 16; i++) {
+                    const chNum = i.toString().padStart(2, '0');
+                    const chKey = `CH${chNum}`;
+                    const ch = channels[chKey] || { status: 'unknown', last_check: '-' };
+                    
+                    const channelDiv = document.createElement('div');
+                    channelDiv.className = `channel ${ch.status}`;
+                    
+                    let emoji = '⚪';
+                    let statusText = '알 수 없음';
+                    
+                    if (ch.status === 'drowsy') {
+                        emoji = '😴';
+                        statusText = '조는 중!';
+                    } else if (ch.status === 'alert') {
+                        emoji = '✅';
+                        statusText = '정상';
+                    } else if (ch.status === 'empty') {
+                        emoji = '⚪';
+                        statusText = '비어있음';
+                    }
+                    
+                    channelDiv.innerHTML = `
+                        <div class="channel-number">CH ${chNum}</div>
+                        <div class="channel-emoji">${emoji}</div>
+                        <div class="channel-status">${statusText}</div>
+                    `;
+                    
+                    channelsGrid.appendChild(channelDiv);
+                }
+                
+            } catch (error) {
+                console.error('데이터 로드 오류:', error);
+                document.getElementById('channels-grid').innerHTML = `
+                    <div class="error">
+                        ⚠️ 데이터를 불러오는데 실패했습니다.<br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+        
+        // 초기 로드
+        loadData();
+        
+        // 30초마다 자동 새로고침
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
