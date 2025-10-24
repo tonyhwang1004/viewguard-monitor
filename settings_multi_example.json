@@ -1,0 +1,60 @@
+{
+  "detection": {
+    "ear_threshold": 0.2,
+    "head_tilt_threshold": 0.58,
+    "confidence_threshold": 0.75,
+    "drowsy_count_threshold": 5,
+    "check_interval": 2,
+    "alert_cooldown": 300
+  },
+  
+  "seat_detection": {
+    "brightness_threshold": 180,
+    "edge_density_threshold": 0.05
+  },
+  
+  "telegram": {
+    "comment": "텔레그램 다중 사용자 설정",
+    "bot_token": "YOUR_BOT_TOKEN_HERE",
+    "chat_ids": {
+      "comment": "각 사용자/그룹의 chat_id",
+      "admin": "123456789",
+      "staff1": "987654321",
+      "staff2": "555666777",
+      "group": "-1001234567890"
+    },
+    "alert_to": "group",
+    "alert_to_options": "group | all | admin | staff1 | staff2"
+  },
+  
+  "google_sheets": {
+    "comment": "구글 스프레드시트 자동 기록",
+    "enabled": false,
+    "credentials_file": "config/google_credentials.json",
+    "sheet_name": "독서실_졸음_기록",
+    "worksheet": "실시간기록"
+  },
+  
+  "webhook": {
+    "comment": "n8n 또는 다른 자동화 도구 연동",
+    "enabled": false,
+    "url": "https://your-n8n-url.com/webhook/drowsy-alert",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  
+  "notification_preferences": {
+    "comment": "알림 우선순위 및 필터",
+    "send_telegram": true,
+    "log_to_sheets": true,
+    "send_webhook": false,
+    "min_confidence_for_alert": 0.75,
+    "quiet_hours": {
+      "enabled": false,
+      "start": "22:00",
+      "end": "07:00"
+    }
+  }
+}
